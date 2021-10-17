@@ -3,6 +3,12 @@ library(shinythemes)
 library(shinydashboard)
 library(DT)
 library(ggplot2)
+library(dplyr)
+library(mathjaxr)
+
+df1 = read.csv(url("https://raw.githubusercontent.com/alfianp613/uas_kmmi/main/Dataset/Real_Estate_Dataset.csv"),sep=";")
+df2 = read.csv(url("https://raw.githubusercontent.com/alfianp613/uas_kmmi/main/Dataset/real_estate_dataset_no_norm.csv"))
+df3 = read.csv(url("https://raw.githubusercontent.com/alfianp613/uas_kmmi/main/Dataset/real_estate_dataset_with_norm.csv"))
 
 
 ui <- dashboardPage(skin = "black",
@@ -17,64 +23,51 @@ ui <- dashboardPage(skin = "black",
     )
   ),
   ## Body content
-  dashboardBody(skin = "black",
+  dashboardBody(
+    tags$head(tags$style(HTML('
+        /* logo */
+        .skin-black .main-header .logo {
+                              font-family: "Georgia", Times, "Times New Roman", serif;
+                              font-weight: bold;
+                              font-size: 24px;
+                              }'))),
     tabItems(
       # First tab content
-      tabItem(tabName = "load_data",
-              sidebarLayout(
-                sidebarPanel(
+      tabItem(skin = "black",
+              tabName = "load_data",
+              fluidPage(
+                fluidRow(
+                  column(4,
                   # Input: Select a file ----
-                  fileInput("file1", "Masukkan Data real_estate_dataset_clean.csv",
-                            multiple = TRUE,
-                            accept = c("text/csv",
-                                       "text/comma-separated-values,text/plain",
-                                       ".csv")),
-                  
-                  # Horizontal line ----
-                  tags$hr(),
-                  
-                  # Input: Checkbox if file has header ----
-                  checkboxInput("header", "Header", TRUE),
-                  
-                  # Input: Select separator ----
-                  radioButtons("sep", "Separator",
-                               choices = c(Comma = ",",
-                                           Semicolon = ";",
-                                           Tab = "\t"),
-                               selected = ","),
-                  
-                  # Input: Select quotes ----
-                  radioButtons("quote", "Quote",
-                               choices = c(None = "",
-                                           "Double Quote" = '"',
-                                           "Single Quote" = "'"),
-                               selected = '"'),
-                  
-                  # Horizontal line ----
-                  tags$hr(),
-                  
-                  # Input: Select number of rows to display ----
-                  radioButtons("disp", "Display",
-                               choices = c(Head = "Head",
-                                           Tail = "Tail",
-                                           All = "all"),
-                               selected = "Head")
-                ),
-                mainPanel(
+                  selectInput("file1", "Pilih Dataset:",
+                              choices = c(" ", 
+                                          "Dataset Real Estate",
+                                          "Dataset Real Estate Clean", 
+                                          "Dataset Real Estate Clean with Normalization")),
+                    ),
+                column(8,
                   h5("Link Dataset: "),
-                  tags$a(href="https://archive.ics.uci.edu/ml/datasets/Real+estate+valuation+data+set", "Dataset Real Estate"),
+                  tags$a(href="https://archive.ics.uci.edu/ml/datasets/Real+estate+valuation+data+set", target="_blank", "Sumber Dataset"),
+                  tags$br(),
+                  tags$a(href="https://drive.google.com/file/d/1f8hrvw7lmWOj5kxhyDM8fkDANcktb6bK/view?usp=sharing", target="_blank", "Dataset Real Estate (.csv)"),
+                  tags$br(),
+                  tags$a(href="https://drive.google.com/file/d/17zedL6yFQsrdpqLy-xZapTg0H-b4KzJK/view?usp=sharing", target="_blank", "Dataset Real Estate Clean"),
+                  tags$br(),
+                  tags$a(href="https://drive.google.com/file/d/1FQdcNeARSYQ2_nMdKM6GyA1JSolfRNZT/view?usp=sharing", target="_blank", "Dataset Real Estate Clean with Normalization"))),
                   tags$hr(),
-                  tableOutput("contents"),
+                  DT::dataTableOutput("contents"),
+                  # tableOutput("contents"),
+                  tags$br(),
                   verbatimTextOutput("keterangan")
-                ))
-      ),
+                )),
       # Second tab content
-      tabItem(tabName = "visualisasi",
-              mainPanel(
-                tabsetPanel(type = "pills",
+      tabItem(skin = "black",
+              tabName = "visualisasi",
+              fluidPage(tabsetPanel(type = "pills",
                             tabPanel("Plot", tabsetPanel(
                               type="tabs",
                               tabPanel("Histogram",
+                                       tags$br(),
                                        sidebarPanel(
                                          
                                          selectInput(inputId = "variable",
@@ -103,6 +96,7 @@ ui <- dashboardPage(skin = "black",
                                                     }")),
                                                  plotOutput(outputId = "Histogram"))),
                               tabPanel("Scatter Plot",
+                                       tags$br(),
                                        sidebarPanel(
                                          selectInput(inputId = "varx",
                                                      label = "Pilih Variabel X:",
@@ -147,7 +141,8 @@ ui <- dashboardPage(skin = "black",
                                                     font-size: 15px;
                                                     text-align: left;
                                                     }")))),
-                              tabPanel("Line Chart",
+                              tabPanel("Time-Series Plot",
+                                       tags$br(),
                                        sidebarPanel(
                                          selectInput(inputId = "varl",
                                                      label = "Pilih Variabel:",
@@ -168,18 +163,68 @@ ui <- dashboardPage(skin = "black",
                                                     }")),
                                                  plotOutput(outputId = "line"))))),
                             tabPanel("Summary",
+                                     tags$br(),
                                      h3("Summary Real Estate Data"),
-                                     mainPanel(verbatimTextOutput("summary")))))),
-      tabItem(tabName = "analisis",
-              mainPanel(
+                                     mainPanel(verbatimTextOutput("summary")),
+                                     tags$head(tags$style("#summary{color: text-align: center;
+                                                                                font-size: 17px;
+                                                                                }")))))),
+      tabItem(skin = "black",
+              tabName = "analisis",
+              fluidPage(
                 tabsetPanel(type = "pills",
                             tabPanel("Regresi", 
                                      tabsetPanel(type="tabs",
-                                                 tabPanel("Model"),
-                                                 tabPanel("Asumsi"),
-                                                 tabPanel("Prediksi"))),
-                            tabPanel("Kesimpulan dan Saran")))),
+                                                 tabPanel("Model",
+                                                          tags$br(),
+                                                          h3("Model Regresi Real Estate"),
+                                                          mainPanel(verbatimTextOutput("model"),
+                                                                    h3(textOutput("teksinter")),
+                                                                    uiOutput("equation"),
+                                                                    tags$pre(textOutput("isi")),
+                                                                    tags$head(tags$style("#teksinter{color: black;
+                                                                                font-size: 25px;
+                                                                                text-align: left;
+                                                                                }")),
+                                                                    tags$head(tags$style("#isi{color: black;
+                                                                                font-size: 20px;
+                                                                                text-align: justify;
+                                                                                }")),
+                                                                    tags$head(tags$style("#equation{color: black;
+                                                                                font-size: 20px;
+                                                                                }")),
+                                                                    tags$head(tags$style("#model{color: text-align: center;
+                                                                                font-size: 17px;
+                                                                                }")))),
+                                                 tabPanel("Prediksi",
+                                                          tags$br(),
+                                                          sidebarPanel(
+                                                            numericInput("X2", "House Age", 0),
+                                                            numericInput("X3", "Distance to the nearest MRT station", 0),
+                                                            numericInput("X4", "Number of convenience stores", 0),
+                                                            numericInput("X5", "Latitude", 0),
+                                                            br(),
+                                                            actionButton("pred", "Prediksi")),
+                                                          mainPanel(
+                                                            h2("Hasil Prediksi:"),
+                                                            h3(textOutput("prediksi")),
+                                                            p(textOutput("catatan")),
+                                                            tags$head(tags$style("#prediksi{color: black;
+                                                                                font-size: 50px;
+                                                                                text-align: center;
+                                                                                }")),
+                                                            tags$head(tags$style("#catatan{color: black;
+                                                                                font-size: 25px;
+                                                                                text-align: left;
+                                                                                }")))))),
+                            tabPanel("Kesimpulan dan Saran",
+                                     tags$br(),
+                                     h3('Kesimpulan :'),
+                                     tags$p(textOutput("kesimpulan")),
+                                     h3('Saran :'),
+                                     tags$p(textOutput("Saran")))))),
       tabItem(tabName = "anggota",
+              tags$br(),
               mainPanel(
                 h1("Anggota Tim:"),
                 tags$hr(),
@@ -188,33 +233,50 @@ ui <- dashboardPage(skin = "black",
                 h3("162012133013 - Denise Arne Ardanty"),
                 h3("162012133016 - Nurul Aini"),
                 tags$hr())))))
+
 server <- function(input, output) {
-  output$contents <- renderTable({
-    req(input$file1)
+  datasetInput <- reactive({
+    switch(input$file1,
+           " "="",
+           "Dataset Real Estate"=df1,
+           "Dataset Real Estate Clean"=df2,
+           "Dataset Real Estate Clean with Normalization"=df3)
+  })
+  output$contents = DT::renderDataTable({
+    validate(
+      need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
+    )
     
-    df <- read.csv(input$file1$datapath,
-                   header = input$header,
-                   sep = input$sep,
-                   quote = input$quote)
-    
-    if(input$disp == "Head") {
-      return(head(df))
-    }
-    else if(input$disp == "Tail") {
-      return(tail(df))
-    }
-    else {
-      return(df)
-    }
+    datasetInput()
     
   })
+  
+  # output$contents <- renderTable({
+  #   validate(
+  #     need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
+  #   )
+  # 
+  #   df <- datasetInput()
+  #   
+  #   if(input$disp == "Head") {
+  #     return(head(df))
+  #   }
+  #   else if(input$disp == "Tail") {
+  #     return(tail(df))
+  #   }
+  #   else {
+  #     return(df)
+  #   }
+  #   
+  # })
+  
   variableInput <- reactive({
-    req(input$file1)
+    validate(
+      need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
+    )
     
-    df <- read.csv(input$file1$datapath,
-                   header = input$header,
-                   sep = input$sep,
-                   quote = input$quote)
+    df <- datasetInput()
+    
     switch(input$variable,
            "House age (X2)"=df$X2,
            "Distance to the nearest MRT station (X3)"=df$X3,
@@ -224,7 +286,8 @@ server <- function(input, output) {
            "Houses Price (Y)"=df$Y)
   })
   output$keterangan <- renderText({
-    req(input$file1)
+    req(datasetInput())
+    
     paste0("Keterangan:
     \nX1\t: Transaction date
     \nX2\t: House age
@@ -243,11 +306,11 @@ server <- function(input, output) {
            "Dark Green" = "darkgreen")
   })
   output$Histogram <- renderPlot({
-    req(input$file1)
-    df <- read.csv(input$file1$datapath,
-                   header = input$header,
-                   sep = input$sep,
-                   quote = input$quote)
+    validate(
+      need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
+    )
+    
+    df <- datasetInput()
     
     ggplot(df,aes(x=variableInput()))+
       geom_histogram(fill=colorInput(),
@@ -256,21 +319,23 @@ server <- function(input, output) {
   },height = 375,width = 800)
   
   output$summary <- renderPrint({
-    req(input$file1)
+    validate(
+      need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
+    )
     
-    df <- read.csv(input$file1$datapath,
-                   header = input$header,
-                   sep = input$sep,
-                   quote = input$quote)
+    df <- datasetInput()
+    
+    df$X1 = as.Date(df$X1)
+    
     summary(df)})
   
   variableXInput <- reactive({
-    req(input$file1)
+    validate(
+      need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
+    )
     
-    df <- read.csv(input$file1$datapath,
-                   header = input$header,
-                   sep = input$sep,
-                   quote = input$quote)
+    df <- datasetInput()
+    
     switch(input$varx,
            "House age (X2)"=df$X2,
            "Distance to the nearest MRT station (X3)"=df$X3,
@@ -281,12 +346,12 @@ server <- function(input, output) {
   })
   
   variableYInput <- reactive({
-    req(input$file1)
+    validate(
+      need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
+    )
     
-    df <- read.csv(input$file1$datapath,
-                   header = input$header,
-                   sep = input$sep,
-                   quote = input$quote)
+    df <- datasetInput()
+    
     switch(input$vary,
            "Houses Price (Y)"=df$Y,
            "House age (X2)"=df$X2,
@@ -312,11 +377,11 @@ server <- function(input, output) {
   })
   
   output$Scatterplot <- renderPlot({
-    req(input$file1)
-    df <- read.csv(input$file1$datapath,
-                   header = input$header,
-                   sep = input$sep,
-                   quote = input$quote)
+    validate(
+      need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
+    )
+    
+    df <- datasetInput()
     
     ggplot(df,
            aes(x=variableXInput(),
@@ -329,12 +394,12 @@ server <- function(input, output) {
   },height = 375,width = 800)
   
   varilineInput <- reactive({
-    req(input$file1)
+    validate(
+      need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
+    )
     
-    df <- read.csv(input$file1$datapath,
-                   header = input$header,
-                   sep = input$sep,
-                   quote = input$quote)
+    df <- datasetInput()
+    
     switch(input$varl,
            "House age (X2)"=df$X2,
            "Distance to the nearest MRT station (X3)"=df$X3,
@@ -352,11 +417,11 @@ server <- function(input, output) {
   })
   
   output$line <- renderPlot({
-    req(input$file1)
-    df <- read.csv(input$file1$datapath,
-                   header = input$header,
-                   sep = input$sep,
-                   quote = input$quote)
+    validate(
+      need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
+    )
+    
+    df <- datasetInput()
     
     df$X1 = as.Date(df$X1)
     
@@ -372,18 +437,110 @@ server <- function(input, output) {
   output$judulhistogram <- renderText({
     paste("Histogram",input$variable,sep=" ")
   })
+  
   output$judulscatter <- renderText({
     paste("Scatter Plot",input$varx,"vs",input$vary,sep=" ")
   })
+  
   output$korelasi <- renderText({
     paste("Koefieisn korelasi",input$varx,"~",input$vary,":",cor(variableXInput(),variableYInput()),sep=" ")
   })
+  
   output$info = renderText({ 
     paste0("x : ", input$plot_click$x, "\ny : ", input$plot_click$y) 
   })
+  
   output$judulline <- renderText({
-    paste("Tren",input$variable,sep=" ")
+    paste("Time-Series Plot",input$variable,sep=" ")
+  })
+  
+  output$model <- renderPrint({
+    validate(
+      need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
+    )
+    
+    df <- datasetInput()
+    
+    df_reg1 = df[, c(3,4,5,6,8)]
+    model1 <- lm(Y ~ ., data = df_reg1)
+    summary(model1)
+    })
+  output$teksinter <- renderText({
+    req(input$file1)
+    "Interpretasi:"
+  })
+  
+  datapred <- eventReactive(input$pred, {
+    df1 = data.frame(X2 = input$X2,
+               X3 = input$X3,
+               X4 = input$X4,
+               X5 = input$X5)
+    
+    normalize <- function(x) {
+      return ((x - min(x)) / (max(x) - min(x)))
+    }
+    
+    df1 %>% 
+      mutate_at(.vars = vars(X2, X3, X4, X5),
+                .funs = funs(normalize))
+    df1
+  })
+  
+  output$prediksi <- renderText({
+    validate(
+      need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
+    )
+    
+    df <- datasetInput()
+    
+    df_reg1 = df[, c(3,4,5,6,8)]
+    model1 <- lm(Y ~ ., data = df_reg1)
+    
+    pred = predict(model1, datapred()) * 10000 
+    paste(round(pred,3),"New Taiwan Dollar/Ping")
+  })
+  output$equation <- renderUI({
+    validate(
+      need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
+    )
+    
+    df <- datasetInput()
+    
+    df_reg1 = df[, c(3,4,5,6,8)]
+    model1 <- lm(Y ~ ., data = df_reg1)
+    
+    modelSummary = summary(model1)
+    modelCoeffs = modelSummary$coefficients
+    
+    plus <- function(x) {
+      ifelse(x < 0,return(""),return("+"))
+    }
+    
+    withMathJax(
+      helpText(paste('Didapatkan persamaan regresi sebagai berikut: 
+                     $$\\hat{Y} =',
+                      round(modelCoeffs["(Intercept)","Estimate"],4),plus(modelCoeffs["X2","Estimate"]),
+                      round(modelCoeffs["X2","Estimate"],4),"X_2",plus(modelCoeffs["X3","Estimate"]),
+                      round(modelCoeffs["X3","Estimate"],4),"X_3",plus(modelCoeffs["X4","Estimate"]),
+                      round(modelCoeffs["X4","Estimate"],4),"X_4",plus(modelCoeffs["X5","Estimate"]),
+                      round(modelCoeffs["X5","Estimate"],4),'X_5$$',sep=""))
+    )
+  })
+  output$isi <- renderText({
+    req(datasetInput())
+    
+      'Keterangan:
+      \nX2\t: House age
+      \nX3\t: Distance to the nearest MRT station
+      \nX4\t: Number of convenience stores
+      \nX5\t: Latitude
+      \nY\t: Houses Price'
+  })
+  
+  output$catatan <- renderText({
+    req(datasetInput())
+    "Catatan: 1 Ping = 3.3 meter squared"
   })
 }
 shinyApp(ui, server)
-
+  

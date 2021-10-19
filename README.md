@@ -1,6 +1,6 @@
 # uas_kmmi
 
-We made dashboard ![UCL Real Estate Valuation Dataset](https://archive.ics.uci.edu/ml/datasets/Real+estate+valuation+data+set)
+We made dashboard ![UCI Real Estate Valuation Dataset](https://archive.ics.uci.edu/ml/datasets/Real+estate+valuation+data+set)
 
 Author:
 

@@ -173,56 +173,48 @@ ui <- dashboardPage(skin = "black",
               tabName = "analisis",
               fluidPage(
                 tabsetPanel(type = "pills",
-                            tabPanel("Regresi", 
-                                     tabsetPanel(type="tabs",
-                                                 tabPanel("Model",
-                                                          tags$br(),
-                                                          h3("Model Regresi Real Estate"),
-                                                          mainPanel(verbatimTextOutput("model"),
-                                                                    h3(textOutput("teksinter")),
-                                                                    uiOutput("equation"),
-                                                                    tags$pre(textOutput("isi")),
-                                                                    tags$head(tags$style("#teksinter{color: black;
+                            tabPanel("Regresi Linear",
+                                     tags$br(),
+                                     h3("Model Regresi Linear Real Estate Valuation"),
+                                     mainPanel(verbatimTextOutput("model"),
+                                               h3(textOutput("teksinter")),
+                                               uiOutput("equation"),
+                                               tags$pre(textOutput("isi")),
+                                               tags$head(tags$style("#teksinter{color: black;
                                                                                 font-size: 25px;
                                                                                 text-align: left;
                                                                                 }")),
-                                                                    tags$head(tags$style("#isi{color: black;
+                                               tags$head(tags$style("#isi{color: black;
                                                                                 font-size: 20px;
                                                                                 text-align: justify;
                                                                                 }")),
-                                                                    tags$head(tags$style("#equation{color: black;
+                                               tags$head(tags$style("#equation{color: black;
                                                                                 font-size: 20px;
                                                                                 }")),
-                                                                    tags$head(tags$style("#model{color: text-align: center;
+                                               tags$head(tags$style("#model{color: text-align: center;
                                                                                 font-size: 17px;
                                                                                 }")))),
-                                                 tabPanel("Prediksi",
-                                                          tags$br(),
-                                                          sidebarPanel(
-                                                            numericInput("X2", "House Age", 0),
-                                                            numericInput("X3", "Distance to the nearest MRT station", 0),
-                                                            numericInput("X4", "Number of convenience stores", 0),
-                                                            numericInput("X5", "Latitude", 0),
-                                                            br(),
-                                                            actionButton("pred", "Prediksi")),
-                                                          mainPanel(
-                                                            h2("Hasil Prediksi:"),
-                                                            h3(textOutput("prediksi")),
-                                                            p(textOutput("catatan")),
-                                                            tags$head(tags$style("#prediksi{color: black;
+                            tabPanel("Prediksi",
+                                     tags$br(),
+                                     sidebarPanel(
+                                       numericInput("X2", "Umur rumah (tahun)", 0),
+                                       numericInput("X3", "Jarak rumah ke stasiun MRT terdekat (m)", 0),
+                                       numericInput("X4", "Jumlah toko serba ada di sekitar rumah", 0),
+                                       numericInput("X5", "Koordinat geografis garis lintang (derajat)", 0),
+                                       br(),
+                                       actionButton("pred", "Prediksi")),
+                                     mainPanel(
+                                       h2("Hasil Prediksi:"),
+                                       h3(textOutput("prediksi")),
+                                       p(textOutput("catatan")),
+                                       tags$head(tags$style("#prediksi{color: black;
                                                                                 font-size: 50px;
                                                                                 text-align: center;
                                                                                 }")),
-                                                            tags$head(tags$style("#catatan{color: black;
+                                       tags$head(tags$style("#catatan{color: black;
                                                                                 font-size: 25px;
                                                                                 text-align: left;
-                                                                                }")))))),
-                            tabPanel("Kesimpulan dan Saran",
-                                     tags$br(),
-                                     h3('Kesimpulan :'),
-                                     tags$p(textOutput("kesimpulan")),
-                                     h3('Saran :'),
-                                     tags$p(textOutput("Saran")))))),
+                                                                                }"))))))),
       tabItem(tabName = "anggota",
               tags$br(),
               mainPanel(
@@ -251,24 +243,6 @@ server <- function(input, output) {
     
   })
   
-  # output$contents <- renderTable({
-  #   validate(
-  #     need(datasetInput() != "", "Silahkan pilih dataset terlebih dahulu!")
-  #   )
-  # 
-  #   df <- datasetInput()
-  #   
-  #   if(input$disp == "Head") {
-  #     return(head(df))
-  #   }
-  #   else if(input$disp == "Tail") {
-  #     return(tail(df))
-  #   }
-  #   else {
-  #     return(df)
-  #   }
-  #   
-  # })
   
   variableInput <- reactive({
     validate(
@@ -471,19 +445,24 @@ server <- function(input, output) {
   })
   
   datapred <- eventReactive(input$pred, {
-    df1 = data.frame(X2 = input$X2,
-               X3 = input$X3,
-               X4 = input$X4,
-               X5 = input$X5)
-    
-    normalize <- function(x) {
-      return ((x - min(x)) / (max(x) - min(x)))
+    if (datasetInput()==df3) {
+      dfs = df2[, c(3,4,5,6)]
+      dfn = data.frame(X2 = input$X2,
+                       X3 = input$X3,
+                       X4 = input$X4,
+                       X5 = input$X5)
+      
+      normalize <- function(x,df) {
+        return ((x - min(df)) / (max(df) - min(df)))
+      }
+      
+      normalize(dfn,dfs)
+    } else {
+      data.frame(X2 = input$X2,
+                 X3 = input$X3,
+                 X4 = input$X4,
+                 X5 = input$X5)
     }
-    
-    df1 %>% 
-      mutate_at(.vars = vars(X2, X3, X4, X5),
-                .funs = funs(normalize))
-    df1
   })
   
   output$prediksi <- renderText({
